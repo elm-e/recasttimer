@@ -12,11 +12,11 @@ if (config===null) {
     config = {
         hidden: [],
     };
-    storage.setItem('countdown_config', JSON.stringify(config));
+    storage.setItem('recasttimer_config', JSON.stringify(config));
 }
 
 function saveConfig() {
-    storage.setItem('countdown_config', JSON.stringify(config));
+    storage.setItem('recasttimer_config', JSON.stringify(config));
 }
 // ;
 
