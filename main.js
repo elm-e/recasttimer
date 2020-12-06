@@ -5,20 +5,48 @@ var recastData = {};
 var intervalId = null;
 var filtered = false;
 
+var partyList = [];
+var myName = '';
+
 var storage = localStorage;
 var config = JSON.parse(storage.getItem('recasttimer_config'));
 if (config===null) {
     console.log('Config init');
     config = {
         hidden: [],
+        locked: [],
     };
-    storage.setItem('recasttimer_config', JSON.stringify(config));
+    saveConfig();
+}
+
+if (!config.hidden) {
+    config.hidden = [];
+    saveConfig();
+}
+
+if (!config.locked) {
+    config.locked = [];
+    saveConfig();
 }
 
 function saveConfig() {
     storage.setItem('recasttimer_config', JSON.stringify(config));
 }
-// ;
+
+function setFilter(f) {
+    filtered = f;
+    if (filtered) {
+        $('#status').text('filtered');
+        $('#unfilter .filter').hide();
+        $('#unfilter .unfilter').show();
+    }
+    else {
+        $('#recast-table tr').show();
+        $('#status').text('');
+        $('#unfilter .filter').show();
+        $('#unfilter .unfilter').hide();
+    }
+}
 
 function setValue(i, value) {
     let color = '';
@@ -28,7 +56,7 @@ function setValue(i, value) {
     $("#recast-table tbody tr").eq(i).find('.recast').text(value);
 }
 
-function reload() {
+function load(callback) {
     $('#recast-table tbody').html('');
 
     $.ajax({
@@ -40,8 +68,8 @@ function reload() {
         for (let i in recastList) {
             let key = `${recastList[i].name}.${recastList[i].skill}`;
             let hidden = config.hidden.indexOf(key) >= 0;
-            console.log(key);
-            console.log(key in config.hidden);
+            let locked = config.locked.indexOf(key) >= 0;
+            
             recastData[key] = i;
             recastList[i].value = 'Ready';
             recastList[i].lasttime = null;
@@ -49,11 +77,16 @@ function reload() {
             let tr = $('<tr></tr>');
             $(tr).append(`<td class="name"><span>${recastList[i].name}</span></td>`);
             $(tr).append(`<td class="skill"><span>${recastList[i].skill}</span></td>`);
+            $(tr).append(`<td class="view"><span><input type="checkbox" id="${key}"></input><label for="${key}" class="checkbox"></label></span></td>`);
             $(tr).append(`<td class="recast" style="color:#e3ea7d">${recastList[i].value}</td>`);
 
             if (hidden) {
-                tr.hide();
-                $('#status').text('filtered');
+                $(tr).hide();
+                setFilter(hidden);
+            }
+
+            if (locked) {
+                $(tr).find('input[type=checkbox]').prop('checked', true);
             }
 
             $('#recast-table tbody').append($(tr));
@@ -61,12 +94,40 @@ function reload() {
     
         console.log('recastList', recastList);
         console.log('recastData', recastData);
-    
+        
+        if (callback)
+            callback()
+
     }).fail(function (result) {
         console.log(result);
     });
 }
-addOverlayListener('LogLine', (data) => {
+
+window.addOverlayListener('ChangePrimaryPlayer', (data) => {
+    myName = data.charName;
+    if (partyList.indexOf(myName) < 0)
+        partyList.push(myName);
+
+    console.log(partyList);
+});
+
+window.addOverlayListener('PartyChanged', (data) => {
+    partyList = [];
+    console.log(data);
+    if (data.party.length === 0) {
+        if (myName !== '')
+            partyList.push(myName);
+    }
+    else {
+        for (let i in data.party) {
+            partyList.push(data.party[i].name);
+        }
+    }
+
+    console.log(partyList);
+});
+
+window.addOverlayListener('LogLine', (data) => {
     //["00", "2020-12-05T20:37:02.0000000+09:00", "082b", "", "Elm Earhartの「迅速魔」"
     if (data.line[0] === '00') {
         let info = data.line[4].match(/(.+?)の「(.+?)」/);
@@ -116,77 +177,86 @@ addOverlayListener('LogLine', (data) => {
 
 $(function () {
     $('#reload').on('click', function() {
-        reload();
+        load();
     });
 
     $('#unfilter').on('click', function() {
-        $('#recast-table tr').show();
-        $('#status').text('');
-        config.hidden = [];
+        if (filtered) {
+            config.hidden = [];
+        }
+        else {
+            $('#recast-table tbody').find('tr').each(function(i, elem) {
+                let key = $(elem).find('td.name').text() + '.' + $(elem).find('td.skill').text();
+                let locked = config.locked.indexOf(key) >= 0;
+                if (!locked) {
+                    $(elem).hide();
+                    config.hidden.push(key);
+                }
+            });
+        }
+        filtered = !filtered;
         saveConfig();
-        filtered = false;
-    });
-    
-    $('#recast-table').on('click', 'td.name span', function() {
-        $(this).parents("tr").hide();
-        let key = $(this).parents("tr").find('td.name').text() + '.' + $(this).parents("tr").find('td.skill').text();
-        config.hidden.push(key);
-        saveConfig();
-        filtered = true;
-        $('#status').text('filtered');
+        setFilter(filtered);
     });
 
+    $('#party-filter').on('click', function() {
+        $('#recast-table tbody').find('tr').each(function(i, elem) {
+            if ( partyList.indexOf($(elem).find('td.name').text()) < 0) {
+                let key = $(elem).find('td.name').text() + '.' + $(elem).find('td.skill').text();
+                let locked = config.locked.indexOf(key) >= 0;
+                if (!locked) {
+                    $(elem).hide();
+                    config.hidden.push(key);        
+                    setFilter(true);
+                }
+            }
+        });
+        saveConfig();
+    });
+    
     $('#recast-table').on('click', 'td.skill span', function() {
         var skill = $(this).text();
         $('#recast-table tbody').find('tr').each(function(i, elem) {
-            if ($(elem).find('td.skill').text() !== skill) {
-                $(elem).hide()
+            if ($(elem).is(':visible') && $(elem).find('td.skill').text() !== skill) {
                 let key = $(elem).find('td.name').text() + '.' + $(elem).find('td.skill').text();
-                config.hidden.push(key);
-                filtered = true;
+                let locked = config.locked.indexOf(key) >= 0;
+                if (!locked) {
+                    $(elem).hide()
+                    config.hidden.push(key);
+                    setFilter(true);
+                }
             }
         });
-        if (filtered) {
-            saveConfig();
-            $('#status').text('filtered');
-        }
+        saveConfig();
     });
 
-    $.ajax({
-        type: 'GET',
-        url: 'https://script.google.com/macros/s/AKfycbzNYd8qbaDaUYtOo_cSSh9SKYZTdwrZaago4gm_npS38PcKRYo/exec',
-        dataType: 'json',
-    }).done(function (result) {
-        recastList = result;
-        recastData = {};
-        for (let i in recastList) {
-
-            let key = `${recastList[i].name}.${recastList[i].skill}`;
-            let hidden = config.hidden.indexOf(key) >= 0;
-            recastData[key] = i;
-            recastList[i].value = 'Ready';
-            recastList[i].lasttime = null;
-    
-            let tr = $('<tr></tr>');
-            $(tr).append(`<td class="name"><span>${recastList[i].name}</span></td>`);
-            $(tr).append(`<td class="skill"><span>${recastList[i].skill}</span></td>`);
-            $(tr).append(`<td class="recast" style="color:#e3ea7d">${recastList[i].value}</td>`);
-
-            if (hidden) {
-                tr.hide();
-                $('#status').text('filtered');
-            }
-
-            $('#recast-table tbody').append($(tr));
+    $('#recast-table').on('click', 'td.name span', function() {
+        let key = $(this).parents("tr").find('td.name').text() + '.' + $(this).parents("tr").find('td.skill').text();
+        let locked = config.locked.indexOf(key) >= 0;
+        if (!locked) {
+            $(this).parents("tr").hide();
+            config.hidden.push(key);
+            setFilter(true);
         }
-    
-        console.log('recastList', recastList);
-        console.log('recastData', recastData);
-    
+        saveConfig();
+    });
+
+    $('#recast-table').on('change', 'td.view input[type=checkbox]', function() {
+        let key = $(this).parents("tr").find('td.name').text() + '.' + $(this).parents("tr").find('td.skill').text();
+        if ($(this).prop('checked')) {
+            config.locked.push(key);
+        }
+        else {
+            let i = config.locked.indexOf(key);
+            if(i >= 0)
+                config.locked.splice(i, 1);
+        }
+        saveConfig();
+    });
+
+    load(() => {
+        console.log("START");
         startOverlayEvents();
-    
-    }).fail(function (result) {
-        console.log(result);
     });
 })
 
