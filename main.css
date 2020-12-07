@@ -137,3 +137,7 @@ html {
 #recast-table tbody tr:hover {
     background-color: #000000ad;
 }
+
+#recast-table thead th span {
+    margin-left: 0.2rem;
+}
