@@ -115,6 +115,7 @@ html {
     font-weight: bold;
     width: 100%;
     z-index: 5;
+    white-space: nowrap;
 }
 
 .table .thead div {
@@ -130,6 +131,7 @@ html {
     height: 2.5rem; 
     line-height: 1.75rem;
     position: relative;
+    white-space: nowrap;
 }
 
 .table .row .val {
@@ -157,20 +159,22 @@ html {
     transition: width 1.0s linear;
 }
 
-.table .tbody .name {
-    width: calc(50% - 0.5rem)
+.table .name{
+    /* width: calc(20% - 0.5rem); */
+    min-width: 10rem;
 }
 
-.table .tbody .skill {
-    width: calc(20% - 0.5rem)
+.table .skill {
+    width: calc(40% - 0.5rem)
 }
 
-.table .tbody .lock {
+.table .lock {
     width: calc(20% - 0.5rem);
 }
 
-.table .tbody .recast {
-    width: calc(10% - 0.5rem - 9px);
+.table .recast {
+    width: calc(20% - 0.5rem - 9px);
+    max-width: 7rem;
 }
 
 .table .tbody label:before {
