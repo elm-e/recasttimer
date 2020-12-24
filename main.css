@@ -129,7 +129,7 @@ html {
 
 .table .row {
     height: 2.5rem; 
-    line-height: 1.75rem;
+    line-height: 2rem;
     position: relative;
     white-space: nowrap;
 }
@@ -143,24 +143,23 @@ html {
     z-index: 2;
 }
 
-.table .row .val div {
-    display: inline-block;
-    padding: 0.5rem 0 0.5rem 0.5rem;
-}
-
 .table .row .bar {
-    background-color: rgba(153, 8, 8, 0.5);
     /* width: 100%; */
     height: calc(100% - 1px);
     position: absolute;
-    left: 0;
-    bottom: calc(-0.1rem + 1px);
+    right: 0;
+    bottom: 1px;
     z-index: 1;
-    transition: width 1.0s linear;
+    /* transition: width 1.0s linear; */
+}
+
+.table .row .val div {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
 }
 
 .table .name{
-    /* width: calc(20% - 0.5rem); */
+    width: calc(20% - 0.5rem);
     min-width: 10rem;
 }
 
@@ -173,8 +172,7 @@ html {
 }
 
 .table .recast {
-    width: calc(20% - 0.5rem - 9px);
-    max-width: 7rem;
+    width: calc(20% - 0.5rem);
 }
 
 .table .tbody label:before {

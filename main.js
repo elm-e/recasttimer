@@ -61,10 +61,19 @@ function setValue(i, value, recast) {
     if (value === 'Ready') {
         color = '#e3ea7d';
         _v = 0;
+        $(".table .tbody .row").eq(i).find('.bar').css('transition', '');
     }
     else {
         _v -= 1;
     }
+    
+    if (_v == recast -1)
+        $(".table .tbody .row").eq(i).find('.bar').css('width', '100%');
+
+    if (_v == recast -1)
+        $(".table .tbody .row").eq(i).find('.bar').css('transition', 'width 1.0s linear');
+
+    console.log(i, _v, recast -1);
     $(".table .tbody .row").eq(i).find('.bar').css('width', `${_v / recast * 100}%`);
     $(".table .tbody .row").eq(i).find('.recast').css('color', color);
     $(".table .tbody .row").eq(i).find('.recast').text(value);
