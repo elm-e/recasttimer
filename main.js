@@ -73,7 +73,7 @@ function setValue(i, value, recast) {
     if (_v == recast -1)
         $(".table .tbody .row").eq(i).find('.bar').css('transition', 'width 1.0s linear');
 
-    console.log(i, _v, recast -1);
+    //console.log(i, _v, recast -1);
     $(".table .tbody .row").eq(i).find('.bar').css('width', `${_v / recast * 100}%`);
     $(".table .tbody .row").eq(i).find('.recast').css('color', color);
     $(".table .tbody .row").eq(i).find('.recast').text(value);
@@ -98,7 +98,7 @@ function setTable() {
                 alpha = temp;
         }
         
-        console.log(alpha);
+        //console.log(alpha);
         $(div).append(`<div class="inbox bar" style="background-color:${recastList[i].color}${alpha}"></div>`);
 
         let val = $('<div class="inbox val">');
