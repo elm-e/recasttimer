@@ -81,29 +81,99 @@ html {
     background: #0000008a;
 }
 
-#recast-table {
-    border-collapse: collapse;
+.table span, .table label {
+    cursor: pointer;
+}
+
+.table .tbody .row {
+    -webkit-transition: all 0.3s ease;
+    transition: all  0.3s ease;
+}
+
+.table .tbody .row:hover {
+    background-color: #000000ad;
+}
+
+.table .thead span {
+    margin-left: 0.2rem;
+}
+
+.table {
     width: 100%;
-    /* height: 100%; */
     cursor: default;
     margin-bottom: 2.8rem;
 }
 
-#recast-table thead {
+.table .thead {
     font-size: 1.0rem;
     text-align: left;
     background-color: rgba(0, 0, 0, 0.616);
     color: rgb(255, 255, 255);
+    position: absolute;
+    top: 2.5rem;
+    left: 0;
+    font-weight: bold;
+    width: 100%;
+    z-index: 5;
 }
 
-#recast-table td, #recast-table th {
-    padding: 0.3rem 0.5rem;
-}
-#recast-table span {
-    cursor: pointer;
+.table .thead div {
+    display: inline-block;
+    padding: 0.5rem 0 0.5rem 0.5rem;
 }
 
-#recast-table td.view label:before {
+.table .tbody {
+    z-index: 1;
+}
+
+.table .row {
+    height: 2.5rem; 
+    line-height: 1.75rem;
+    position: relative;
+}
+
+.table .row .val {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    z-index: 2;
+}
+
+.table .row .val div {
+    display: inline-block;
+    padding: 0.5rem 0 0.5rem 0.5rem;
+}
+
+.table .row .bar {
+    background-color: rgba(153, 8, 8, 0.5);
+    /* width: 100%; */
+    height: calc(100% - 1px);
+    position: absolute;
+    left: 0;
+    bottom: calc(-0.1rem + 1px);
+    z-index: 1;
+    transition: width 1.0s linear;
+}
+
+.table .tbody .name {
+    width: calc(50% - 0.5rem)
+}
+
+.table .tbody .skill {
+    width: calc(20% - 0.5rem)
+}
+
+.table .tbody .lock {
+    width: calc(20% - 0.5rem);
+}
+
+.table .tbody .recast {
+    width: calc(10% - 0.5rem - 9px);
+}
+
+.table .tbody label:before {
     content: '';
     width: 3.5rem;
     height: 1rem;
@@ -115,11 +185,11 @@ html {
     vertical-align: middle;
 }
 
-#recast-table td.view input[type=checkbox] {
-	display:		none;
+.table .tbody input[type=checkbox] {
+	display: none;
 }
 
-#recast-table td.view input[type=checkbox]:checked + label:before {
+.table .tbody input[type=checkbox]:checked + label:before {
     content: 'lock';
     font-size: 1.2rem;
     border: rgb(182, 228, 255) 1px solid;
@@ -127,17 +197,4 @@ html {
     text-align: center;
     line-height: 1.1rem;
     color: rgb(182, 228, 255);
-}
-
-#recast-table tbody tr {
-    -webkit-transition: all 0.3s ease;
-    transition: all  0.3s ease;
-}
-
-#recast-table tbody tr:hover {
-    background-color: #000000ad;
-}
-
-#recast-table thead th span {
-    margin-left: 0.2rem;
 }

@@ -48,19 +48,26 @@ function setFilter(f) {
         $('#unfilter .unfilter').show();
     }
     else {
-        $('#recast-table tr').show();
+        $('.table .row').show();
         $('#status').text('');
         $('#unfilter .filter').show();
         $('#unfilter .unfilter').hide();
     }
 }
 
-function setValue(i, value) {
+function setValue(i, value, recast) {
     let color = '';
-    if (value === 'Ready')
+    let _v = value;
+    if (value === 'Ready') {
         color = '#e3ea7d';
-    $("#recast-table tbody tr").eq(i).find('.recast').css('color', color);
-    $("#recast-table tbody tr").eq(i).find('.recast').text(value);
+        _v = 0;
+    }
+    else {
+        _v -= 1;
+    }
+    $(".table .tbody .row").eq(i).find('.bar').css('width', `${_v / recast * 100}%`);
+    $(".table .tbody .row").eq(i).find('.recast').css('color', color);
+    $(".table .tbody .row").eq(i).find('.recast').text(value);
 }
 
 function setTable() {
@@ -73,27 +80,40 @@ function setTable() {
         recastData[key] = i;
         recastList[i].value = 'Ready';
         recastList[i].lasttime = null;
+        
+        let div = $('<div class="row"></div>');
+        let alpha = '50';
+        if (recastList[i].alpha) {
+            let temp = ( '00' + recastList[i].alpha ).slice( -2 );
+            if (/^[0-9A-Fa-f]{2}$/.test(temp))
+                alpha = temp;
+        }
+        
+        console.log(alpha);
+        $(div).append(`<div class="inbox bar" style="background-color:${recastList[i].color}${alpha}"></div>`);
 
-        let tr = $('<tr></tr>');
-        $(tr).append(`<td class="name"><span>${recastList[i].name}</span></td>`);
-        $(tr).append(`<td class="skill"><span>${recastList[i].skill}</span></td>`);
-        $(tr).append(`<td class="view"><span><input type="checkbox" id="${key}"></input><label for="${key}" class="checkbox"></label></span></td>`);
-        $(tr).append(`<td class="recast" style="color:#e3ea7d">${recastList[i].value}</td>`);
+        let val = $('<div class="inbox val">');
+        $(val).append(`<div class="name"><span>${recastList[i].name}</span></div>`);
+        $(val).append(`<div class="skill"><span>${recastList[i].skill}</span></div>`);
+        $(val).append(`<div class="lock"><span><input type="checkbox" id="${key}"></input><label for="${key}" class="checkbox"></span></label></div>`);
+        $(val).append(`<div class="recast" style="color:#e3ea7d">${recastList[i].value}</div>`);
+        
+        $(div).append(val);
 
         if (hidden) {
-            $(tr).hide();
+            $(div).hide();
             setFilter(hidden);
         }
 
         if (locked)
-            $(tr).find('input[type=checkbox]').prop('checked', true);
+            $(div).find('input[type=checkbox]').prop('checked', true);
 
-        $('#recast-table tbody').append($(tr));
+        $('.table .tbody').append($(div));
     }
 }
 
 function load(callback) {
-    $('#recast-table tbody').empty();
+    $('.table .tbody').empty();
     $.ajax({
         type: 'GET',
         url: 'https://script.google.com/macros/s/AKfycbzNYd8qbaDaUYtOo_cSSh9SKYZTdwrZaago4gm_npS38PcKRYo/exec',
@@ -101,8 +121,8 @@ function load(callback) {
     }).done(function (result) {
         recastList = result;
         setTable();
-        // console.log('recastList', recastList);
-        // console.log('recastData', recastData);
+        console.log('recastList', recastList);
+        console.log('recastData', recastData);
         if (callback)
             callback()
 
@@ -148,7 +168,7 @@ window.addOverlayListener('LogLine', (data) => {
 
             recastList[idx].lasttime = new Date().getTime();
             recastList[idx].value = recastList[idx].recast;
-            setValue(idx, recastList[idx].value);
+            setValue(idx, recastList[idx].value, recastList[idx].recast);
 
             if (intervalId === null) {
                 intervalId = setInterval(() => {
@@ -163,7 +183,7 @@ window.addOverlayListener('LogLine', (data) => {
                                 recastList[i].value--;
                                 if (recastList[i].value <= 0)
                                     recastList[i].value = 'Ready';
-                                setValue(i, recastList[i].value);
+                                setValue(i, recastList[i].value, recastList[i].recast);
                                 recastList[i].lasttime = time;
                             }
                         }
@@ -185,6 +205,10 @@ window.addOverlayListener('LogLine', (data) => {
 
 $(function () {
     $('#reload').on('click', function() {
+        if (intervalId !== null) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
         load();
     });
 
@@ -193,8 +217,8 @@ $(function () {
             config.hidden = [];
         }
         else {
-            $('#recast-table tbody').find('tr').each(function(i, elem) {
-                let key = $(elem).find('td.name').text() + '.' + $(elem).find('td.skill').text();
+            $('.table').find('.row').each(function(i, elem) {
+                let key = $(elem).find('.name').text() + '.' + $(elem).find('.skill').text();
                 let locked = config.locked.indexOf(key) >= 0;
                 if (!locked) {
                     $(elem).hide();
@@ -208,9 +232,9 @@ $(function () {
     });
 
     $('#party-filter').on('click', function() {
-        $('#recast-table tbody').find('tr').each(function(i, elem) {
-            if ( partyList.indexOf($(elem).find('td.name').text()) < 0) {
-                let key = $(elem).find('td.name').text() + '.' + $(elem).find('td.skill').text();
+        $('.table .tbody').find('.row').each(function(i, elem) {
+            if ( partyList.indexOf($(elem).find('.name').text()) < 0) {
+                let key = $(elem).find('.name').text() + '.' + $(elem).find('.skill').text();
                 let locked = config.locked.indexOf(key) >= 0;
                 if (!locked) {
                     $(elem).hide();
@@ -222,9 +246,9 @@ $(function () {
         saveConfig();
     });
     
-    $('#recast-table thead th.sort').on('click', function() {
-        $('#recast-table tbody').empty();
-        var target = $(this).attr('name');
+    $('.table .thead').on('click', '.sort label', function() {
+        $('.table .tbody').empty();
+        var target = $(this).parents('.sort').attr('name');
         var orderStr = '';
 
         if (target !== 'lock') {
@@ -259,11 +283,11 @@ $(function () {
         setTable();
     });
 
-    $('#recast-table').on('click', 'td.skill span', function() {
+    $('.table .tbody').on('click', '.skill span', function() {
         var skill = $(this).text();
-        $('#recast-table tbody').find('tr').each(function(i, elem) {
-            if ($(elem).is(':visible') && $(elem).find('td.skill').text() !== skill) {
-                let key = $(elem).find('td.name').text() + '.' + $(elem).find('td.skill').text();
+        $('.table .tbody').find('.row').each(function(i, elem) {
+            if ($(elem).is(':visible') && $(elem).find('.skill').text() !== skill) {
+                let key = $(elem).find('.name').text() + '.' + $(elem).find('.skill').text();
                 let locked = config.locked.indexOf(key) >= 0;
                 if (!locked) {
                     $(elem).hide()
@@ -275,19 +299,19 @@ $(function () {
         saveConfig();
     });
 
-    $('#recast-table').on('click', 'td.name span', function() {
-        let key = $(this).parents("tr").find('td.name').text() + '.' + $(this).parents("tr").find('td.skill').text();
+    $('.table .tbody').on('click', '.name span', function() {
+        let key = $(this).parents(".row").find('.name').text() + '.' + $(this).parents(".row").find('.skill').text();
         let locked = config.locked.indexOf(key) >= 0;
         if (!locked) {
-            $(this).parents("tr").hide();
+            $(this).parents(".row").hide();
             config.hidden.push(key);
             setFilter(true);
         }
         saveConfig();
     });
 
-    $('#recast-table').on('change', 'td.view input[type=checkbox]', function() {
-        let key = $(this).parents("tr").find('td.name').text() + '.' + $(this).parents("tr").find('td.skill').text();
+    $('.table .tbody').on('change', '.lock input[type=checkbox]', function() {
+        let key = $(this).parents(".row").find('.name').text() + '.' + $(this).parents(".row").find('.skill').text();
         if ($(this).prop('checked')) {
             config.locked.push(key);
         }
